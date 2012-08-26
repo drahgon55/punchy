@@ -9,19 +9,6 @@ var util = require('util');
 
 parse.logLevel = 50;
 
-var dnsBrowseEvent = function (timeStamp,eventType,domain,serviceType,instanceName) {
-	this.eventType = eventType;
-	this.instanceName = instanceName;
-	this.serviceType = serviceType;
-	this.domain = domain;
-	this.timeStamp = timeStamp
-};
-
-var dnsLookup = function (hostName,textRecords) {
-	this.hostName = hostName;
-	this.textRecords = textRecords;
-};
-
 parse.setLogLevel = function (level) {
 	if (level) {
 		parse.logLevel = level;
@@ -69,68 +56,6 @@ parse.log = function () {
 	}
 }
 
-parse.parseToTextRecords = function(data) {
-	data = data.toString();
-	var d = data.split(" ");
-	
-	var records = d[11].split(';');
-	var Records = {};
-	
-	for (var i = 0; i < records.length; i++) {
-		var temp = records[i].split('=');
-		if (temp.length > 1 && temp[1].indexOf("\r\n") != -1) {
-			temp[1] = temp[1].split("\r\n")[0];
-		}
-		Records[temp[0]] = temp[1];
-	}
-	
-	return Records;
-}
-
-parse.parseToLookupObject = function (data) {
-	var obj;
-	var objs = [];	
-	data = data.toString();
-	var d = data.split(" ");
-	
-	if (d.length > 2) {	
-		var d2 = this.parseBlanks(d);	
-		
-		if (d2[0] === 'Lookup') {
-			//remove "Lookup Laptop._webdav._tcp.local."
-			d2.splice(0,2);
-		}
-		//parse.log('parse',d,d2[6])
-		//console.log('good lookup',d2)
-		obj = new dnsLookup(d2[6].split(':')[0],d2[7]);					
-	  
-		return obj;
-	} else {
-		//console.log('null lookup',d)
-		return undefined;
-	}
-}
-
-parse.parseToIp = function (data) {
-	var obj;
-	var objs = [];	
-	data = data.toString();
-	var d = data.split(" ");
-	
-	var d2 = this.parseBlanks(d);
-	
-	for (var i = 0;i < d2.length; i++) {
-		//console.log(d2[i]);
-	}
-	//console.log(d2[5],d2[12]);
-	
-	if (d[0] === 'Timestamp')
-		return d2[12];
-	//console.log(d2[5]);
-  
-	return d2[5];
-}
-
 parse.parseBlanks = function (d) {
 	var d2 = [];
 			  
@@ -161,42 +86,17 @@ parse.parseBlanks = function (d) {
 	return d2;
 }
 
-parse.parseToBrowseEvents = function(data) {
-	var event;
-	var events = [];	
-	data = data.toString();
-	var d = data.split(" ");
-	
-	var d2 = this.parseBlanks(d);
-	
-	var k;
-    if (d[0] === "Browsing") {		
-		for (k = 12; k < d2.length; k += 7) {				
-			event = new dnsBrowseEvent(d2[k],d2[k+1],d2[k+4],d2[k+5],d2[k+6]);			
-			
-			events.push(event);
-		}		
-    } else {		
-		for (k = 0; k < d2.length; k += 7) {	
-			event = new dnsBrowseEvent(d2[k],d2[k+1],d2[k+4],d2[k+5],d2[k+6]);
-						
-			events.push(event);
-		}
-    }
-	return events;
-};
-
-//converts path to specifies OS delimiters
+//converts path to specific OS delimiters
 parse.switchSeparator = function (filePath,type) {
 	var newPath = "";
 	var currentType;
 	var sep = {windows: '\\', linux: '/'};	
 	
-	if (filePath.indexOf('\\') !== -1) {
+	if (filePath.indexOf(sep.windows) !== -1) {
 		currentType = 'windows';
 		
 	} 	
-	else if (filePath.indexOf('/') !== -1) {
+	else if (filePath.indexOf(sep.linux) !== -1) {
 		currentType = 'linux';
 	}
 	else {
