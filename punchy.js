@@ -13,7 +13,7 @@ var Server = http.createServer(punchy.requestCB);
 
 Server.listen(80);
 io = io.listen(Server);
-sock.initialize(io,[],{onConnect: punchy.socketConnectionCB, onMessage: punchy.messageCB});
+sock.initialize(io,["open"],{onConnect: punchy.socketConnectionCB, onMessage: punchy.messageCB});
 
 var clients = {};
 
@@ -81,6 +81,11 @@ punchy.socketDisconnectCB = function () {
 //called when a message is received from ANY group, use groupId(group name) to differentiate
 punchy.messageCB = function (data, groupId) {
 	parse.log("Received message from: " + groupId);
+	
+	if (groupId == "open") {
+		var socketID = sock.getSocket(data.name);
+		sock.emit("open",{},socketID);
+	}
 }
 
 console.log('Server running at http://127.0.0.1:80/');

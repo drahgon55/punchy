@@ -42,15 +42,25 @@ sock.connectionCB = function (socket) {
 	for (group in sock.groups) {
 		socket.on(group, function (data) {sock.messageCB(data,group)});
 	}	
-	socket.on("instanceName", function (data) { sock.currSockets[socket.id].name = data.name});
+	socket.on("instanceName", function (data) { 
+		sock.currSockets[socket.id].name = data.name;
+		sock.currSockets[name] = socket.id;
+	});
 	socket.on('disconnect', sock.disconnectCB.bind(this,socket))
+}
+
+sock.getSocketID = function (name) {
+	return sock.currSockets[name];
 }
 
 sock.disconnectCB = function (socket) {
 	parse.log("Disconnected Socket:",socket.id)
 	
 	if (sock.currSockets && sock.currSockets[socket.id]) 
+	{
+		delete sock.currSockets[sock.currSockets[socket.id].name];
 		delete sock.currSockets[socket.id];
+	}
 }
 
 //emits to all sockets
